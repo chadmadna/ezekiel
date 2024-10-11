@@ -13,9 +13,9 @@ const config = {
   username: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  entities: ['src/**/*.entity.{ts,js}'],
+  entities: ['dist/**/*.entity.js'],
   synchronize: shouldSynchronize,
-  migrations: ['src/migrations/*'],
+  migrations: ['dist/migrations/*.js'],
 };
 
 export const typeormConfig = registerAs('typeorm', () => config);
