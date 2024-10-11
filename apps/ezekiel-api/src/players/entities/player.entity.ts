@@ -6,7 +6,7 @@ import {
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
-  OneToOne,
+  OneToMany,
 } from 'typeorm';
 
 @Entity('players')
@@ -23,7 +23,7 @@ export class PlayerEntity extends BaseEntity {
   @ManyToOne(() => CampaignEntity, (campaign) => campaign.players)
   campaign: CampaignEntity;
 
-  @OneToOne(() => InventoryItemEntity, (item) => item.player, {
+  @OneToMany(() => InventoryItemEntity, (item) => item.player, {
     eager: true,
     cascade: true,
   })

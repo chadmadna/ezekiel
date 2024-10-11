@@ -13,13 +13,15 @@ export class CampaignsService {
     newCampaign.name = createCampaignDto.name;
     newCampaign.details = createCampaignDto.details;
     newCampaign.isActive = createCampaignDto.isActive;
-    newCampaign.players = createCampaignDto.players.map((player) => {
-      const newPlayer = new PlayerEntity();
-      newPlayer.playerName = player.playerName;
-      newPlayer.characterName = player.characterName;
-      newPlayer.items = [];
-      return newPlayer;
-    });
+    newCampaign.players = await Promise.all(
+      createCampaignDto.players.map((player) => {
+        const newPlayer = new PlayerEntity();
+        newPlayer.playerName = player.playerName;
+        newPlayer.characterName = player.characterName;
+        newPlayer.items = [];
+        return newPlayer.save();
+      }),
+    );
 
     try {
       await newCampaign.save();
@@ -58,23 +60,26 @@ export class CampaignsService {
 
   async update(id: number, updateCampaignDto: UpdateCampaignDto) {
     const campaign = await CampaignEntity.findOneBy({ id: id });
-    campaign.name = updateCampaignDto.name ?? campaign.name;
-    campaign.details = updateCampaignDto.details ?? campaign.details;
-    campaign.isActive = updateCampaignDto.isActive ?? campaign.isActive;
-    campaign.players =
-      updateCampaignDto.players.map((player) => {
+    campaign.name = updateCampaignDto.name;
+    campaign.details = updateCampaignDto.details;
+    campaign.isActive = updateCampaignDto.isActive;
+    campaign.players = await Promise.all(
+      updateCampaignDto.players.map(async (player) => {
         const newPlayer = new PlayerEntity();
         newPlayer.playerName = player.playerName;
         newPlayer.characterName = player.characterName;
-        newPlayer.items = player.items.map(
-          (item) =>
-            <InventoryItemEntity>{
-              name: item.name,
-              quantity: item.quantity,
-            },
+        newPlayer.items = await Promise.all(
+          player.items.map(async (item) => {
+            const newItem = new InventoryItemEntity();
+            newItem.name = item.name;
+            newItem.quantity = item.quantity;
+
+            return newItem.save();
+          }),
         );
-        return newPlayer;
-      }) ?? campaign.players;
+        return newPlayer.save();
+      }),
+    );
 
     try {
       await campaign.save();
@@ -106,11 +111,11 @@ export class CampaignsService {
           (item) => item.name === currentItem.name,
         );
         if (!existingItem) {
+          delete currentItem.id;
           prevItems.push(currentItem);
         } else {
           existingItem.quantity += currentItem.quantity;
         }
-
         return prevItems;
       }, []);
 
